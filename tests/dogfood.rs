@@ -19,10 +19,7 @@ fn mdcheck(args: &[&str]) -> std::process::Output {
 
 #[test]
 fn dod_feature_index_fixture_passes_its_own_rule_file() {
-    let output = mdcheck(&[
-        "docs/example.yaml",
-        "tests/fixtures/feature-index-good.md",
-    ]);
+    let output = mdcheck(&["docs/example.yaml", "tests/fixtures/feature-index-good.md"]);
 
     assert_eq!(
         output.status.code(),
