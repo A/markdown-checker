@@ -1,0 +1,28 @@
+[package]
+name = "mdcheck"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "mdcheck"
+path = "src/lib.rs"
+
+[[bin]]
+name = "mdcheck"
+path = "src/main.rs"
+
+[dependencies]
+comrak = "0.54"
+clap = { version = "4.6", features = ["derive"] }
+serde-saphyr = "=0.0.29"
+regex = "1.13"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+anyhow = "1"
+indexmap = "2"
+
+[dev-dependencies]
+insta = "1.48"
+assert_cmd = "2.2"
+predicates = "3.1"
