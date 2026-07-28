@@ -1,0 +1,15 @@
+---
+source: tests/fixture_run_tests.rs
+expression: render(&findings)
+---
+feature-index.rule[0] feature-index-bad.md:2 — `confirmed` is `maybe`, allowed: `yes`, `no`
+feature-index.rule[0] feature-index-bad.md:3 — key `draft` must not be present
+feature-index.rule[2] feature-index-bad.md:5 — `search index of features` does not match `^\S+ feature index$`
+feature-index.rule[3] feature-index-bad.md:1 — required section `Priority levels` missing
+feature-index.rule[3] feature-index-bad.md:14 — section order: `Roles` appears after `Features`, expected before
+feature-index.rule[3] feature-index-bad.md:19 — section `Extra` not allowed (strict)
+feature-index.rule[4] feature-index-bad.md:17 — `broken item` does not match `^\*\*.+\*\* — .+`
+feature-index.rule[5] feature-index-bad.md:9 — column `capabilities` missing
+feature-index.rule[5] feature-index-bad.md:12 — row has 2 cells, expected 3
+feature-index.rule[5] feature-index-bad.md:9 — table has 2 body rows, expected ≥ 3
+feature-index.rule[6] feature-index-bad.md:11 — `p9` is not allowed, allowed: `p0`, `p1`, `p2`, `p3`

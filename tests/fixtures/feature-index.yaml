@@ -1,0 +1,29 @@
+doc: feature-index
+
+rules:
+  - select: FRONTMATTER
+    has: { confirmed: { enum: [yes, no] } }
+    not_has: [draft]
+
+  - select: DOCUMENT
+    min_lines: 20
+
+  - select: H1
+    count: 1
+    match: '^\S+ feature index$'
+    max_length: 60
+
+  - select: H1 > H2
+    ordered: [Roles, Priority levels, Features, Questions?]
+    strict: true
+
+  - select: SECTION("Roles") > UL > LI
+    min: 2
+    match: '^\*\*.+\*\* — .+'
+
+  - select: SECTION("Features") > TABLE
+    columns: [priority, epic, feature, capabilities]
+    rows: { min: 3 }
+
+  - select: SECTION("Features") > TABLE > TD[col="priority"]
+    enum: [p0, p1, p2, p3]
