@@ -3,9 +3,29 @@
 // Each test binary compiles the module and uses part of it.
 #![allow(dead_code)]
 
+use std::path::{Path, PathBuf};
+
 use mdcheck::finding::Finding;
 use mdcheck::model::DocModel;
 use mdcheck::rules::RuleSet;
+
+/// An empty directory of its own under the integration-test temp dir.
+pub fn scratch(name: &str) -> PathBuf {
+    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).expect("scratch dir");
+    dir
+}
+
+/// Writes `contents` to `dir/name`, creating parent directories.
+pub fn write(dir: &Path, name: &str, contents: &str) -> PathBuf {
+    let path = dir.join(name);
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).expect("parent dir");
+    }
+    std::fs::write(&path, contents).expect("write fixture");
+    path
+}
 
 /// Wraps a bare rule list — the form scenarios.md uses — into a full rule file.
 pub fn rule_file(rules: &str) -> String {

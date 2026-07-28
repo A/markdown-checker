@@ -4,6 +4,7 @@
 //! applies all rules and collects all findings — never first-fail.
 
 use std::fmt;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
@@ -22,10 +23,12 @@ pub struct Ctx<'a> {
     /// Selector source, quoted in count-family messages.
     pub selector: &'a str,
     pub scope: &'a Node,
+    /// Base directory link targets resolve against.
+    pub root: &'a Path,
 }
 
 impl Ctx<'_> {
-    fn finding(
+    pub(crate) fn finding(
         &self,
         line: usize,
         expected: impl Into<String>,
@@ -40,9 +43,22 @@ pub trait Assertion: fmt::Debug + Send + Sync {
     fn evaluate(&self, matches: &[Match<'_>], ctx: &Ctx<'_>) -> Vec<Finding>;
 }
 
+/// Applies every rule of `rules` to `doc`, resolving link targets against
+/// `file`'s own directory.
+pub fn run(rules: &RuleSet, doc: &DocModel, file: &str) -> Vec<Finding> {
+    run_with_root(rules, doc, file, &own_directory(file))
+}
+
+fn own_directory(file: &str) -> PathBuf {
+    match Path::new(file).parent() {
+        Some(parent) if !parent.as_os_str().is_empty() => parent.to_path_buf(),
+        _ => PathBuf::from("."),
+    }
+}
+
 /// Applies every rule of `rules` to `doc`, collecting all findings. Load-stage
 /// findings come first and never abort the run.
-pub fn run(rules: &RuleSet, doc: &DocModel, file: &str) -> Vec<Finding> {
+pub fn run_with_root(rules: &RuleSet, doc: &DocModel, file: &str, root: &Path) -> Vec<Finding> {
     let mut findings: Vec<Finding> = doc
         .load_errors
         .iter()
@@ -67,6 +83,7 @@ pub fn run(rules: &RuleSet, doc: &DocModel, file: &str) -> Vec<Finding> {
             check: &rule.check,
             selector: &rule.selector_source,
             scope: &doc.root,
+            root,
         };
         findings.extend(apply(rule, &matches, &ctx));
     }
@@ -696,23 +713,11 @@ impl Assertion for Each {
                     check: &check,
                     selector: &rule.selector_source,
                     scope: outer.node(),
+                    root: ctx.root,
                 };
                 findings.extend(apply(rule, &inner, &inner_ctx));
             }
         }
         findings
-    }
-}
-
-/// Placeholder for `wiki:` / `resolve:`, which milestone 5 implements in
-/// `src/links.rs`. Accepting them at load time keeps spec rule files loadable;
-/// until then they assert nothing.
-// TODO(M5): replace with the link assertions from src/links.rs.
-#[derive(Debug)]
-pub struct Pending(pub &'static str);
-
-impl Assertion for Pending {
-    fn evaluate(&self, _matches: &[Match<'_>], _ctx: &Ctx<'_>) -> Vec<Finding> {
-        Vec::new()
     }
 }

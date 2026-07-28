@@ -13,6 +13,7 @@ use serde::de::IgnoredAny;
 use serde::Deserialize;
 
 use crate::assert::{self, Assertion, Pattern};
+use crate::links;
 use crate::selector::{self, Selector};
 
 /// Every key a rule may carry — the key scan checks against this list, and the
@@ -233,10 +234,10 @@ fn compile(
         }));
     }
     if raw.wiki.unwrap_or(false) {
-        assertions.push(Box::new(assert::Pending("wiki")));
+        assertions.push(Box::new(links::Wiki));
     }
     if raw.resolve.unwrap_or(false) {
-        assertions.push(Box::new(assert::Pending("resolve")));
+        assertions.push(Box::new(links::Resolve));
     }
     if let Some(each) = &raw.each {
         let mut inner = Vec::new();
