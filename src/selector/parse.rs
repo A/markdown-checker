@@ -312,7 +312,10 @@ impl Parser<'_> {
             return Err(self.error_at(start, "unterminated regexp"));
         }
 
-        match Regex::new(&source) {
+        // Text regexps anchor per line: the document model merges consecutive
+        // source lines into one paragraph, so `^` / `$` in `[text=/…/]` must mean
+        // line boundaries, as they do in the source. Assertion regexps agree.
+        match Regex::new(&format!("(?m){source}")) {
             Ok(regex) => Ok(Pattern { source, regex }),
             Err(err) => Err(self.error_at(
                 start,
