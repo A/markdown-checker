@@ -1,4 +1,4 @@
-//! mdcheck checking its own feature-index contract: rules/feature-index.yaml
+//! mdcheck checking its own feature-index contract: docs/example.yaml
 //! against the repository fixture.
 
 mod support;
@@ -20,7 +20,7 @@ fn mdcheck(args: &[&str]) -> std::process::Output {
 #[test]
 fn dod_feature_index_fixture_passes_its_own_rule_file() {
     let output = mdcheck(&[
-        "rules/feature-index.yaml",
+        "docs/example.yaml",
         "tests/fixtures/feature-index-good.md",
     ]);
 
@@ -61,7 +61,7 @@ fn dod_dropping_a_column_flips_the_dogfood_run_to_findings() {
 
     // The fixture's wiki-links still resolve against the fixture directory.
     let output = mdcheck(&[
-        "rules/feature-index.yaml",
+        "docs/example.yaml",
         &path.display().to_string(),
         "--root",
         "tests/fixtures",
