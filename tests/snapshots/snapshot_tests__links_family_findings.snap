@@ -1,0 +1,33 @@
+---
+source: tests/snapshot_tests.rs
+expression: "json(\"links\")"
+---
+{
+  "files": [
+    "tests/fixtures/bad/links.md"
+  ],
+  "findings": [
+    {
+      "check": "links.rule[0]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/links.md",
+      "line": 3,
+      "expected": "a wiki-link",
+      "actual": "[ext](https://e.com)",
+      "message": "`[ext](https://e.com)` is not a wiki-link"
+    },
+    {
+      "check": "links.rule[1]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/links.md",
+      "line": 3,
+      "expected": "an existing file under the root",
+      "actual": "features/x/stories.md",
+      "message": "target `features/x/stories.md` not found under root"
+    }
+  ],
+  "summary": {
+    "checked": 1,
+    "failed": 1
+  }
+}

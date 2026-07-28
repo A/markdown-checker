@@ -1,0 +1,87 @@
+---
+source: tests/snapshot_tests.rs
+expression: "json(\"scalar\")"
+---
+{
+  "files": [
+    "tests/fixtures/bad/scalar.md"
+  ],
+  "findings": [
+    {
+      "check": "scalar.rule[0]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/scalar.md",
+      "line": 2,
+      "expected": "one of `yes`, `no`",
+      "actual": "maybe",
+      "message": "`confirmed` is `maybe`, allowed: `yes`, `no`"
+    },
+    {
+      "check": "scalar.rule[0]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/scalar.md",
+      "line": 3,
+      "expected": "no `draft` key",
+      "actual": "`draft` present",
+      "message": "key `draft` must not be present"
+    },
+    {
+      "check": "scalar.rule[1]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/scalar.md",
+      "line": 1,
+      "expected": "≥ 20 lines",
+      "actual": "17 lines",
+      "message": "document has 17 lines, expected ≥ 20"
+    },
+    {
+      "check": "scalar.rule[2]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/scalar.md",
+      "line": 5,
+      "expected": "≤ 20 characters",
+      "actual": "38 characters",
+      "message": "length 38, expected ≤ 20"
+    },
+    {
+      "check": "scalar.rule[3]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/scalar.md",
+      "line": 11,
+      "expected": "`Roles` before `Features`",
+      "actual": "`Roles` after `Features`",
+      "message": "section order: `Roles` appears after `Features`, expected before"
+    },
+    {
+      "check": "scalar.rule[3]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/scalar.md",
+      "line": 15,
+      "expected": "one of `Roles`, `Features`",
+      "actual": "Extra",
+      "message": "section `Extra` not allowed (strict)"
+    },
+    {
+      "check": "scalar.rule[4]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/scalar.md",
+      "line": 1,
+      "expected": "≥ 2 matches",
+      "actual": "1 match",
+      "message": "`SECTION(\"Roles\") > UL > LI`: 1 match, expected ≥ 2"
+    },
+    {
+      "check": "scalar.rule[4]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/scalar.md",
+      "line": 13,
+      "expected": "matches `^\\*\\*.+\\*\\* — .+`",
+      "actual": "broken item",
+      "message": "`broken item` does not match `^\\*\\*.+\\*\\* — .+`"
+    }
+  ],
+  "summary": {
+    "checked": 1,
+    "failed": 1
+  }
+}

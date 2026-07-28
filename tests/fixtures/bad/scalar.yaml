@@ -1,0 +1,21 @@
+doc: scalar
+
+rules:
+  - select: FRONTMATTER
+    has: { confirmed: { enum: [yes, no] } }
+    not_has: [draft]
+
+  - select: DOCUMENT
+    min_lines: 20
+
+  - select: H1
+    count: 1
+    max_length: 20
+
+  - select: H1 > H2
+    ordered: [Roles, Features]
+    strict: true
+
+  - select: SECTION("Roles") > UL > LI
+    min: 2
+    match: '^\*\*.+\*\* — .+'

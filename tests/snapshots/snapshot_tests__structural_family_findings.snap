@@ -1,0 +1,60 @@
+---
+source: tests/snapshot_tests.rs
+expression: "json(\"structural\")"
+---
+{
+  "files": [
+    "tests/fixtures/bad/structural.md"
+  ],
+  "findings": [
+    {
+      "check": "structural.rule[0]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/structural.md",
+      "line": 5,
+      "expected": "columns `priority, epic, feature`",
+      "actual": "columns `epic, priority, feature`",
+      "message": "column order `epic, priority, feature`, expected `priority, epic, feature`"
+    },
+    {
+      "check": "structural.rule[0]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/structural.md",
+      "line": 5,
+      "expected": "≥ 3 body rows",
+      "actual": "1 body row",
+      "message": "table has 1 body row, expected ≥ 3"
+    },
+    {
+      "check": "structural.rule[1]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/structural.md",
+      "line": 7,
+      "expected": "a non-empty value",
+      "actual": "",
+      "message": "empty cell in column `feature`"
+    },
+    {
+      "check": "structural.rule[2]",
+      "severity": "error",
+      "file": "tests/fixtures/bad/structural.md",
+      "line": 7,
+      "expected": "one of `p0`, `p1`, `p2`, `p3`",
+      "actual": "p9",
+      "message": "`p9` is not allowed, allowed: `p0`, `p1`, `p2`, `p3`"
+    },
+    {
+      "check": "structural.rule[3].each[0]@16",
+      "severity": "error",
+      "file": "tests/fixtures/bad/structural.md",
+      "line": 16,
+      "expected": "≥ 1 match",
+      "actual": "0 matches",
+      "message": "`P[text=/^As \\*\\*.+\\*\\*/] + UL > LI`: 0 matches, expected ≥ 1"
+    }
+  ],
+  "summary": {
+    "checked": 1,
+    "failed": 1
+  }
+}

@@ -1,0 +1,8 @@
+doc: links
+
+rules:
+  - select: A
+    wiki: true
+
+  - select: A[wiki]
+    resolve: true

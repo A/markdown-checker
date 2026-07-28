@@ -1,0 +1,18 @@
+doc: structural
+
+rules:
+  - select: SECTION("Features") > TABLE
+    columns: [priority, epic, feature]
+    rows: { min: 3 }
+
+  - select: TABLE > TD[col="feature"]
+    no_empty: true
+
+  - select: SECTION("Features") > TABLE > TD[col="priority"]
+    enum: [p0, p1, p2, p3]
+
+  - select: SECTION("Stories") > SECTION(/^[A-Z]/)
+    each:
+      - select: P[text=/^As \*\*.+\*\*/] + UL > LI
+        min: 1
+        match: '^I can .+'
