@@ -1,7 +1,13 @@
 [package]
-name = "mdcheck"
+name = "markdown-checker"
 version = "0.1.0"
 edition = "2021"
+description = "Deterministic spec checker for markdown documents — declare required structure in YAML, get exact line-level violations"
+license = "MIT"
+repository = "https://github.com/A/markdown-checker"
+readme = "README.md"
+keywords = ["markdown", "linter", "validator", "cli", "spec"]
+categories = ["command-line-utilities", "development-tools"]
 
 [lib]
 name = "mdcheck"
