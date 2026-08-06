@@ -21,7 +21,7 @@ cargo install markdown-checker
 Needs a Rust toolchain, nothing else. The binary is `mdcheck`. Pin a version if you want reproducible installs:
 
 ```bash
-cargo install markdown-checker --version 0.1.0
+cargo install markdown-checker --version 0.1.1
 ```
 
 Or install straight from git for the latest unreleased changes:
