@@ -15,14 +15,19 @@ Rules are **declarative**: a rule selects part of the document with a CSS-like s
 ## Install
 
 ```bash
-cargo install --git https://github.com/A/markdown-checker
+cargo install markdown-checker
 ```
 
-Needs a Rust toolchain, nothing else. Pin it if you want reproducible installs:
+Needs a Rust toolchain, nothing else. The binary is `mdcheck`. Pin a version if you want reproducible installs:
 
 ```bash
-cargo install --git https://github.com/A/markdown-checker --tag v0.1.0
-cargo install --git https://github.com/A/markdown-checker --branch master
+cargo install markdown-checker --version 0.1.0
+```
+
+Or install straight from git for the latest unreleased changes:
+
+```bash
+cargo install --git https://github.com/A/markdown-checker
 ```
 
 From a clone: `cargo install --path .`, or `cargo build --release` for `target/release/mdcheck`.
