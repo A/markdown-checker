@@ -71,8 +71,19 @@ impl LoadError {
 #[derive(Debug)]
 pub enum ValueSpec {
     Present,
+    /// The scalar value is one of these; on a list value, every item is.
     Enum(Vec<String>),
     Matches(Pattern),
+    /// The value is a sequence whose length lies within the bounds, and whose
+    /// items are all in `allowed` when given.
+    List(ListSpec),
+}
+
+#[derive(Debug)]
+pub struct ListSpec {
+    pub min: Option<usize>,
+    pub max: Option<usize>,
+    pub allowed: Option<Vec<String>>,
 }
 
 /// A rule ready to run: selector parsed, assertions compiled.
@@ -217,7 +228,7 @@ fn compile(
     if let Some(has) = &raw.has {
         let mut specs = Vec::new();
         for (key, spec) in has {
-            specs.push((key.clone(), value_spec(spec, path)?));
+            specs.push((key.clone(), value_spec(key, spec, path)?));
         }
         assertions.push(Box::new(assert::FrontmatterHas(specs)));
     }
@@ -305,11 +316,32 @@ fn ordered_entry(entry: &str) -> assert::OrderedEntry {
     }
 }
 
-fn value_spec(raw: &RawValueSpec, path: &str) -> Result<ValueSpec, LoadError> {
-    Ok(match raw {
-        RawValueSpec::Pattern(source) => ValueSpec::Matches(compile_regex(source, path, true)?),
-        RawValueSpec::Enum { r#enum } => ValueSpec::Enum(r#enum.clone()),
-        RawValueSpec::Present(_) => ValueSpec::Present,
+fn value_spec(key: &str, raw: &RawValueSpec, path: &str) -> Result<ValueSpec, LoadError> {
+    let spec = match raw {
+        RawValueSpec::Pattern(source) => {
+            return Ok(ValueSpec::Matches(compile_regex(source, path, true)?))
+        }
+        RawValueSpec::Map(spec) => spec,
+    };
+    let invalid = |why: &str| LoadError::new(format!("rule {path}: has `{key}`: {why}"));
+    let (min, max) = match (spec.count, spec.min, spec.max) {
+        (Some(_), Some(_), _) | (Some(_), _, Some(_)) => {
+            return Err(invalid("`count` cannot be combined with `min` or `max`"));
+        }
+        (Some(count), None, None) => (Some(count), Some(count)),
+        (None, Some(min), Some(max)) if min > max => {
+            return Err(invalid(&format!("`min` {min} is greater than `max` {max}")));
+        }
+        (None, min, max) => (min, max),
+    };
+    Ok(match (min, max, &spec.r#enum) {
+        (None, None, None) => ValueSpec::Present,
+        (None, None, Some(allowed)) => ValueSpec::Enum(allowed.clone()),
+        (min, max, allowed) => ValueSpec::List(ListSpec {
+            min,
+            max,
+            allowed: allowed.clone(),
+        }),
     })
 }
 
@@ -377,12 +409,17 @@ struct RawRows {
 #[serde(untagged)]
 enum RawValueSpec {
     Pattern(String),
-    Enum { r#enum: Vec<String> },
-    Present(RawPresent),
+    Map(RawSpecMap),
 }
 
-/// `has: { key: {} }` — presence only. Rejects any other mapping so a misspelled
-/// value spec is a load error instead of a silent presence check.
+/// The mapping form: `{}` is presence only, `enum:` an allowed set, and
+/// `min` / `max` / `count` bound a list's length. Rejects any other key so a
+/// misspelled value spec is a load error instead of a silent presence check.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-struct RawPresent {}
+struct RawSpecMap {
+    r#enum: Option<Vec<String>>,
+    min: Option<usize>,
+    max: Option<usize>,
+    count: Option<usize>,
+}

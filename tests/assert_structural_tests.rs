@@ -129,6 +129,96 @@ fn frontmatter_has_can_demand_presence_only() {
     );
 }
 
+/// `{ min: 1 }` demands a non-empty list, flow or block.
+#[test]
+fn frontmatter_list_min_requires_a_non_empty_list() {
+    let rules = "- select: FRONTMATTER\n  has: { tags: { min: 1 } }";
+
+    assert!(check(rules, "---\ntags: [a]\n---\n").is_empty());
+    assert!(check(rules, "---\ntags:\n  - a\n---\n").is_empty());
+
+    let findings = check(rules, "---\ntags: []\n---\n");
+    assert_eq!(
+        reported(&findings),
+        ["2 — `tags` has 0 items, expected ≥ 1"]
+    );
+    assert_eq!(findings[0].expected, "≥ 1 item");
+    assert_eq!(findings[0].actual, "0 items");
+}
+
+#[test]
+fn frontmatter_list_max_count_and_range() {
+    let doc = "---\ntags: [a, b, c]\n---\n";
+    let has = |spec: &str| {
+        check(
+            &format!("- select: FRONTMATTER\n  has: {{ tags: {spec} }}"),
+            doc,
+        )
+    };
+
+    assert!(has("{ max: 3 }").is_empty());
+    assert!(has("{ count: 3 }").is_empty());
+    assert!(has("{ min: 1, max: 3 }").is_empty());
+    assert_eq!(
+        reported(&has("{ max: 2 }")),
+        ["2 — `tags` has 3 items, expected ≤ 2"]
+    );
+    assert_eq!(
+        reported(&has("{ count: 2 }")),
+        ["2 — `tags` has 3 items, expected exactly 2"]
+    );
+    assert_eq!(
+        reported(&has("{ min: 4, max: 5 }")),
+        ["2 — `tags` has 3 items, expected ≥ 4"]
+    );
+}
+
+/// A cardinality spec on a scalar or a bare key is a finding, not a pass.
+#[test]
+fn frontmatter_list_spec_on_a_scalar_reports_not_a_list() {
+    let rules = "- select: FRONTMATTER\n  has: { tags: { min: 0 } }";
+
+    assert_eq!(
+        reported(&check(rules, "---\ntags: index\n---\n")),
+        ["2 — `tags` value `index` is not a list"]
+    );
+    assert_eq!(
+        reported(&check(rules, "---\ntags:\n---\n")),
+        ["2 — `tags` value `` is not a list"]
+    );
+    assert_eq!(
+        reported(&check(rules, "---\nother: x\n---\n")),
+        ["1 — key `tags` missing"]
+    );
+}
+
+/// `enum:` on a list value checks every item, each at its own line; on a scalar
+/// it stays the whole-value check.
+#[test]
+fn frontmatter_enum_applies_per_list_item() {
+    let rules = "- select: FRONTMATTER\n  has: { tags: { enum: [a, b] } }";
+
+    assert!(check(rules, "---\ntags: [a, b, a]\n---\n").is_empty());
+    assert!(check(rules, "---\ntags: b\n---\n").is_empty());
+    assert_eq!(
+        reported(&check(rules, "---\ntags:\n  - a\n  - x\n  - y\n---\n")),
+        [
+            "4 — `tags` item `x` not allowed, allowed: `a`, `b`",
+            "5 — `tags` item `y` not allowed, allowed: `a`, `b`",
+        ]
+    );
+    assert_eq!(
+        reported(&check(
+            "- select: FRONTMATTER\n  has: { tags: { count: 1, enum: [a] } }",
+            "---\ntags: [x, a]\n---\n"
+        )),
+        [
+            "2 — `tags` has 2 items, expected exactly 1",
+            "2 — `tags` item `x` not allowed, allowed: `a`",
+        ]
+    );
+}
+
 #[test]
 fn frontmatter_not_has_passes_and_fails() {
     let rules = "- select: FRONTMATTER\n  not_has: [draft, wip]";

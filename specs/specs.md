@@ -121,7 +121,7 @@ Regexp assertions come in three modes everywhere: `match` (whole value must matc
 | `strict: true` | no members outside the `ordered`/required list |
 | `columns: [...]` | table header set + order |
 | `rows: {min, max}` | table row count bounds |
-| `has:` / `not_has:` | frontmatter keys; value spec = exact string, `enum:`, or regexp |
+| `has:` / `not_has:` | frontmatter keys; value spec = exact string, `enum:` (per item on a list), regexp, or list length `{min, max}` / `{count}` |
 | `wiki: true` | selected links are wiki-links |
 | `resolve: true` | link targets exist under `--root` |
 | `optional: true` | rule passes when selector matches nothing |

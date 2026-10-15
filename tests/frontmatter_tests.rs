@@ -75,3 +75,56 @@ fn bad_fixture_frontmatter_parses() {
     assert_eq!(out.frontmatter.line_of("draft"), Some(3));
     assert_eq!(out.line_offset, 4);
 }
+
+fn items(out: &frontmatter::Prepass<'_>, key: &str) -> Vec<(String, usize)> {
+    out.frontmatter
+        .list(key)
+        .unwrap_or_else(|| panic!("`{key}` is not a list"))
+        .iter()
+        .map(|item| (item.value.clone(), item.line))
+        .collect()
+}
+
+/// A flow sequence lands in `lists`, items on the key's line; quotes are
+/// stripped and a quoted comma does not split.
+#[test]
+fn flow_sequence_items_parse() {
+    let out = frontmatter::split("---\ntags: [a, \"b, c\", 'd',]\nnone: []\n---\n");
+
+    assert_eq!(
+        items(&out, "tags"),
+        [("a".into(), 2), ("b, c".into(), 2), ("d".into(), 2)]
+    );
+    assert_eq!(items(&out, "none"), []);
+    assert_eq!(out.frontmatter.get("none"), Some("[]"));
+}
+
+/// A block sequence under an empty key: each item carries its own line, and an
+/// item holding a colon does not become a key.
+#[test]
+fn block_sequence_items_parse_with_their_lines() {
+    let out =
+        frontmatter::split("---\ntags:\n  - one\n\n  - \"see: two\"\n- three\ntype: x\n---\n");
+
+    assert_eq!(
+        items(&out, "tags"),
+        [
+            ("one".into(), 3),
+            ("see: two".into(), 5),
+            ("three".into(), 6)
+        ]
+    );
+    assert_eq!(out.frontmatter.get("tags"), Some(""));
+    assert_eq!(out.frontmatter.get("type"), Some("x"));
+    assert!(out.frontmatter.get("- \"see").is_none());
+}
+
+/// A scalar, or an empty key with no items under it, is not a list.
+#[test]
+fn scalars_and_bare_keys_are_not_lists() {
+    let out = frontmatter::split("---\ntitle: Doc\nempty:\nnext: y\n---\n");
+
+    assert!(out.frontmatter.list("title").is_none());
+    assert!(out.frontmatter.list("empty").is_none());
+    assert_eq!(out.frontmatter.get("next"), Some("y"));
+}

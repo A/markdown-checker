@@ -84,11 +84,11 @@ One run reports every violation, never just the first.
 
 Each block below is a complete rule — `select:` picks the elements, the rest asserts on them.
 
-**Frontmatter** — required keys, allowed values, forbidden keys:
+**Frontmatter** — required keys, allowed values, list lengths, forbidden keys:
 
 ```yaml
 - select: FRONTMATTER
-  has: { confirmed: { enum: [yes, no] }, priority: '^P[0-3]$' }
+  has: { confirmed: { enum: [yes, no] }, priority: '^P[0-3]$', tags: { min: 1 } }
   not_has: [draft]
 ```
 

@@ -9,8 +9,9 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::finding::Finding;
+use crate::frontmatter::ListItem;
 use crate::model::{DocModel, ElementKind, Node};
-use crate::rules::{Rule, RuleSet, ValueSpec};
+use crate::rules::{ListSpec, Rule, RuleSet, ValueSpec};
 use crate::selector::{select, select_in, Match};
 
 /// What an assertion needs beyond its match set: the document, the finding
@@ -509,6 +510,27 @@ impl Assertion for FrontmatterHas {
             let line = frontmatter.line_of(key).unwrap_or(frontmatter.start_line);
             match spec {
                 ValueSpec::Present => {}
+                ValueSpec::Enum(allowed) if frontmatter.list(key).is_some() => {
+                    let items = frontmatter.list(key).unwrap_or_default();
+                    findings.extend(list_items_outside(key, items, allowed, ctx));
+                }
+                ValueSpec::List(spec) => {
+                    let Some(items) = frontmatter.list(key) else {
+                        findings.push(ctx.finding(
+                            line,
+                            "a list",
+                            value,
+                            format!("`{key}` value `{}` is not a list", short(value)),
+                        ));
+                        continue;
+                    };
+                    if let Some(finding) = list_length(key, items.len(), spec, line, ctx) {
+                        findings.push(finding);
+                    }
+                    if let Some(allowed) = &spec.allowed {
+                        findings.extend(list_items_outside(key, items, allowed, ctx));
+                    }
+                }
                 ValueSpec::Enum(allowed) => {
                     if !allowed.iter().any(|a| a == value) {
                         findings.push(ctx.finding(
@@ -536,6 +558,54 @@ impl Assertion for FrontmatterHas {
         }
         findings
     }
+}
+
+/// Length of a frontmatter list against `min` / `max` (`count` arrives as both).
+fn list_length(
+    key: &str,
+    len: usize,
+    spec: &ListSpec,
+    line: usize,
+    ctx: &Ctx<'_>,
+) -> Option<Finding> {
+    let items = |n| quantity(n, "item", "items");
+    let (op, bound) = match (spec.min, spec.max) {
+        (Some(min), Some(max)) if min == max && len != min => ("exactly ", min),
+        (Some(min), _) if len < min => ("≥ ", min),
+        (_, Some(max)) if len > max => ("≤ ", max),
+        _ => return None,
+    };
+    Some(ctx.finding(
+        line,
+        format!("{op}{}", items(bound)),
+        items(len),
+        format!("`{key}` has {}, expected {op}{bound}", items(len)),
+    ))
+}
+
+/// One finding per list item outside the allowed set, at the item's own line.
+fn list_items_outside(
+    key: &str,
+    items: &[ListItem],
+    allowed: &[String],
+    ctx: &Ctx<'_>,
+) -> Vec<Finding> {
+    items
+        .iter()
+        .filter(|item| !allowed.contains(&item.value))
+        .map(|item| {
+            ctx.finding(
+                item.line,
+                format!("one of {}", list(allowed)),
+                item.value.as_str(),
+                format!(
+                    "`{key}` item `{}` not allowed, allowed: {}",
+                    short(&item.value),
+                    list(allowed)
+                ),
+            )
+        })
+        .collect()
 }
 
 #[derive(Debug)]

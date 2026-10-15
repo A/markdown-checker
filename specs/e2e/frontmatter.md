@@ -4,7 +4,7 @@ confirmed: No
 
 # E2E: Frontmatter
 
-Contracts over the frontmatter key/value block — `has:` (exact string, `enum:`, or regexp value spec), `not_has:`, and the line each resulting finding points at.
+Contracts over the frontmatter key/value block — `has:` (exact string, `enum:`, regexp, or list-length value spec), `not_has:`, and the line each resulting finding points at.
 
 ## Required keys (`has:`)
 
@@ -109,6 +109,64 @@ Feature: Required frontmatter keys
         """
       When mdcheck checks the document
       Then a finding is reported at line 1: "required key `priority` missing"
+      And the exit code is 1
+```
+
+## List values
+
+```gherkin
+Feature: Frontmatter list values
+
+  A Rule Author requires a frontmatter key to carry a list — non-empty, bounded,
+  or of an exact length — and limits which items it may hold, so that a Spec
+  Author cannot ship an empty `tags:` or an unknown tag.
+
+  Rule: min, max and count bound the number of items; a scalar where a list is required is reported
+
+    @FM-6
+    Scenario: list lengths out of bounds and a scalar in place of a list
+      Given a document:
+        """markdown
+        ---
+        tags: []
+        owners:
+          - ann
+          - bob
+        title: Doc
+        ---
+        # Doc
+        """
+      And the rules:
+        """yaml
+        - select: FRONTMATTER
+          has: { tags: { min: 1 }, owners: { max: 1 }, title: { count: 1 } }
+        """
+      When mdcheck checks the document
+      Then a finding is reported at line 2: "`tags` has 0 items, expected ≥ 1"
+      And a finding is reported at line 3: "`owners` has 2 items, expected ≤ 1"
+      And a finding is reported at line 6: "`title` value `Doc` is not a list"
+      And the exit code is 1
+
+  Rule: enum on a list value applies to every item, each reported at its own line
+
+    @FM-7
+    Scenario: one list item outside the allowed set
+      Given a document:
+        """markdown
+        ---
+        tags:
+          - index
+          - draft
+        ---
+        # Doc
+        """
+      And the rules:
+        """yaml
+        - select: FRONTMATTER
+          has: { tags: { min: 1, enum: [index, spec] } }
+        """
+      When mdcheck checks the document
+      Then a finding is reported at line 4: "`tags` item `draft` not allowed, allowed: `index`, `spec`"
       And the exit code is 1
 ```
 

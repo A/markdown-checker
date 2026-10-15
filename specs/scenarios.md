@@ -69,6 +69,48 @@ config:
 expected:
 - line 2 — `priority` value `P7` does not match `^P[0-3]$`
 
+### FM-6 list length
+
+input:
+```markdown
+---
+tags: []
+owners:
+  - ann
+  - bob
+title: Doc
+---
+# Doc
+```
+config:
+```yaml
+- select: FRONTMATTER
+  has: { tags: { min: 1 }, owners: { max: 1 }, title: { count: 1 } }
+```
+expected:
+- line 2 — `tags` has 0 items, expected ≥ 1
+- line 3 — `owners` has 2 items, expected ≤ 1
+- line 6 — `title` value `Doc` is not a list
+
+### FM-7 enum per list item
+
+input:
+```markdown
+---
+tags:
+  - index
+  - draft
+---
+# Doc
+```
+config:
+```yaml
+- select: FRONTMATTER
+  has: { tags: { min: 1, enum: [index, spec] } }
+```
+expected:
+- line 4 — `tags` item `draft` not allowed, allowed: `index`, `spec`
+
 ## Document
 
 ### DOC-1 min lines

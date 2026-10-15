@@ -4,7 +4,7 @@ confirmed: No
 
 # mdcheck — E2E use-case index
 
-mdcheck applies a YAML rule file of CSS-like selectors and assertions to markdown documents and emits uniform findings. Every row in the tables below is one end-to-end test case: one Scenario or Scenario Outline in `e2e/`, addressed by the stable tag it carries. Ids without an `N` come from [scenarios.md](scenarios.md) and all 34 of them are covered here; ids of the form `<AREA>-N<k>` are cases derived from [specs.md](specs.md) rather than taken from scenarios.md. The Gherkin in `e2e/` is the normative form — this index only points at it.
+mdcheck applies a YAML rule file of CSS-like selectors and assertions to markdown documents and emits uniform findings. Every row in the tables below is one end-to-end test case: one Scenario or Scenario Outline in `e2e/`, addressed by the stable tag it carries. Ids without an `N` come from [scenarios.md](scenarios.md) and all 36 of them are covered here; ids of the form `<AREA>-N<k>` are cases derived from [specs.md](specs.md) rather than taken from scenarios.md. The Gherkin in `e2e/` is the normative form — this index only points at it.
 
 ## Areas
 
@@ -13,7 +13,7 @@ mdcheck applies a YAML rule file of CSS-like selectors and assertions to markdow
 | Loading | Bringing a document into a checkable state; load-stage findings | [loading](e2e/loading.md) | 8 |
 | Rules | Rule-file shape, unknown keys, selector and value-shape errors | [rules](e2e/rules.md) | 15 |
 | Selectors | Scoping, combinators, attribute filters, call sugar, index | [selectors](e2e/selectors.md) | 25 |
-| Frontmatter | `has:` and `not_has:` over the frontmatter key block | [frontmatter](e2e/frontmatter.md) | 10 |
+| Frontmatter | `has:` and `not_has:` over the frontmatter key block | [frontmatter](e2e/frontmatter.md) | 12 |
 | Sections | `ordered:`, optional members, `strict:`, title regexps | [sections](e2e/sections.md) | 14 |
 | Lists and text | Regexp modes, prefix/suffix, length, enum, emptiness, cardinality | [lists-and-text](e2e/lists-and-text.md) | 19 |
 | Tables | `columns:`, `rows:` bounds, per-cell assertions by column name | [tables](e2e/tables.md) | 11 |
@@ -83,6 +83,8 @@ mdcheck applies a YAML rule file of CSS-like selectors and assertions to markdow
 | FM-N4 | Pass a block carrying none of the forbidden keys | Frontmatter | e2e/frontmatter.md |
 | FM-N5 | Ignore frontmatter keys the rule file never names | Frontmatter | e2e/frontmatter.md |
 | FM-N6 | Report every frontmatter violation of a block in a single run | Frontmatter | e2e/frontmatter.md |
+| FM-6 | Bound a list value's length with `min`, `max` or `count`; report a scalar where a list is required | Frontmatter | e2e/frontmatter.md |
+| FM-7 | Check every item of a list value against `enum:`, at the item's own line | Frontmatter | e2e/frontmatter.md |
 | SEC-1 | Pass required sections present in the declared order | Sections | e2e/sections.md |
 | SEC-2 | Report two required sections swapped, at the later one's header | Sections | e2e/sections.md |
 | SEC-3 | Report a required section the document never provides | Sections | e2e/sections.md |

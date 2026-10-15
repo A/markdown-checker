@@ -282,13 +282,15 @@ A cell rule reaches only the column it names, however similar the neighbouring c
 
 ## Frontmatter keys — `has`, `not_has`
 
-`has:` names keys the document must carry, each with a value spec in one of three forms:
+`has:` names keys the document must carry, each with a value spec in one of these forms:
 
 | form | written | means |
 |---|---|---|
 | exact string | `status: approved` | the value is exactly `approved` |
-| `enum:` | `confirmed: { enum: [yes, no] }` | the value is one of the listed values |
+| `enum:` | `confirmed: { enum: [yes, no] }` | the value is one of the listed values; on a list value, every item is |
 | regexp | `priority: '^P[0-3]$'` | the value matches the pattern |
+| presence | `type: {}` | the key is present, whatever its value |
+| list length | `tags: { min: 1 }`, `{ max: 3 }`, `{ count: 2 }`, `{ min: 1, max: 3 }` | the value is a list with that many items |
 
 `not_has:` is a plain list of keys that must never appear. Keys named by neither are ignored — carry whatever else your other tooling needs.
 
@@ -312,6 +314,41 @@ line 2: `confirmed` is `maybe`, allowed: `yes`, `no`
 line 3: `priority` value `P7` does not match `^P[0-3]$`
 line 4: key `draft` must not be present
 ```
+
+### List values — `min`, `max`, `count`
+
+A list value is written flow-style (`tags: [index, spec]`) or block-style (`tags:` with `- index` lines under it). `min:` and `max:` bound its number of items and may be combined; `count:` asks for an exact number and cannot be combined with either. Add `enum:` to the same mapping to limit which items the list may hold — `enum:` alone does the same on a list, and stays the whole-value check on a scalar. A key that carries a scalar (or nothing) where a list-length spec asks for a list is reported as not a list.
+
+```markdown
+---
+tags: []
+owners:
+  - ann
+  - bob
+stage:
+  - draft
+title: Doc
+---
+# Doc
+```
+
+```yaml
+- select: FRONTMATTER
+  has:
+    tags: { min: 1 }
+    owners: { max: 1 }
+    stage: { count: 1, enum: [review, final] }
+    title: { count: 1 }
+```
+
+```
+line 2: `tags` has 0 items, expected ≥ 1
+line 3: `owners` has 2 items, expected ≤ 1
+line 7: `stage` item `draft` not allowed, allowed: `review`, `final`
+line 8: `title` value `Doc` is not a list
+```
+
+A length finding points at the key's line; an item outside the `enum:` set points at the item's own line (for a flow list, the key's line).
 
 **Points at:** the offending key's own line, not the start of the block. Two exceptions, both because there is no key line to point at: a required key that is absent from a present block reports `` required key `priority` missing `` at line 1, and a document with no frontmatter block at all reports `frontmatter block missing` once at line 1 — one finding for the block, however many keys the rule asked for.
 
@@ -372,7 +409,7 @@ An aliased link resolves on its path, not its label: `[[features/x|Overview]]` l
 | `strict` | no members outside the `ordered` list | the stray member's header |
 | `columns` | table header set and its order | table header line |
 | `rows` | body row count within `{min, max}` | table header line |
-| `has` | frontmatter keys present, values satisfying exact / `enum:` / regexp | the key's line (line 1 if absent) |
+| `has` | frontmatter keys present, values satisfying exact / `enum:` / regexp / list `min` `max` `count` | the key's line, a list item's line (line 1 if absent) |
 | `not_has` | frontmatter keys absent | the key's line |
 | `wiki` | selected links are wiki-links | the link |
 | `resolve` | wiki-link targets exist under `--root` | the link |

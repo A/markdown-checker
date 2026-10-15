@@ -122,6 +122,8 @@ summary: a line of text
 
 Keys that neither `has:` nor `not_has:` names are ignored, so a document may carry extra frontmatter for other tooling without mdcheck objecting.
 
+Values are read as plain text, one `key: value` per line; nested YAML maps are not parsed. The one structure mdcheck understands is a list of scalars, written either flow-style (`tags: [index, spec]`) or block-style (`tags:` followed by `- index` lines). Only a list value can satisfy a list-length spec, and each block item keeps its own line for findings.
+
 ## Every element carries a line
 
 Each element remembers the source line it starts at, and that is the line a finding points to. Which element the finding lands on depends on the assertion:

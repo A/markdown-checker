@@ -158,6 +158,47 @@ fn missing_select_is_a_load_error() {
 }
 
 #[test]
+fn frontmatter_list_spec_loads() {
+    RuleSet::parse(
+        "doc: d\nrules:\n  - select: FRONTMATTER\n    has: { tags: { min: 1, max: 3, enum: [a, b] }, ids: { count: 2 } }\n",
+    )
+    .unwrap_or_else(|e| panic!("{e}"));
+}
+
+#[test]
+fn frontmatter_list_count_with_min_or_max_is_a_load_error() {
+    let error = RuleSet::parse(
+        "doc: d\nrules:\n  - select: FRONTMATTER\n    has: { tags: { count: 1, max: 2 } }\n",
+    )
+    .unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "rule 0: has `tags`: `count` cannot be combined with `min` or `max`"
+    );
+}
+
+#[test]
+fn frontmatter_list_min_above_max_is_a_load_error() {
+    let error = RuleSet::parse(
+        "doc: d\nrules:\n  - select: FRONTMATTER\n    has: { tags: { min: 3, max: 1 } }\n",
+    )
+    .unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "rule 0: has `tags`: `min` 3 is greater than `max` 1"
+    );
+}
+
+/// A misspelled key in a value-spec mapping stays a load error.
+#[test]
+fn frontmatter_misspelled_value_spec_key_is_a_load_error() {
+    assert!(RuleSet::parse(
+        "doc: d\nrules:\n  - select: FRONTMATTER\n    has: { tags: { minimum: 1 } }\n",
+    )
+    .is_err());
+}
+
+#[test]
 fn malformed_yaml_is_a_load_error() {
     let error = RuleSet::parse("doc: d\nrules: [").unwrap_err();
     assert!(!error.to_string().is_empty());

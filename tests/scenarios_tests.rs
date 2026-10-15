@@ -52,6 +52,34 @@ fn fm_5_key_value_by_regexp() {
 }
 
 #[test]
+fn fm_6_list_length() {
+    let findings = check(
+        "- select: FRONTMATTER\n  has: { tags: { min: 1 }, owners: { max: 1 }, title: { count: 1 } }",
+        "---\ntags: []\nowners:\n  - ann\n  - bob\ntitle: Doc\n---\n# Doc\n",
+    );
+    assert_eq!(
+        reported(&findings),
+        [
+            "2 — `tags` has 0 items, expected ≥ 1",
+            "3 — `owners` has 2 items, expected ≤ 1",
+            "6 — `title` value `Doc` is not a list",
+        ]
+    );
+}
+
+#[test]
+fn fm_7_enum_per_list_item() {
+    let findings = check(
+        "- select: FRONTMATTER\n  has: { tags: { min: 1, enum: [index, spec] } }",
+        "---\ntags:\n  - index\n  - draft\n---\n# Doc\n",
+    );
+    assert_eq!(
+        reported(&findings),
+        ["4 — `tags` item `draft` not allowed, allowed: `index`, `spec`"]
+    );
+}
+
+#[test]
 fn doc_1_min_lines() {
     let findings = check("- select: DOCUMENT\n  min_lines: 20", "# T\n\nbody\n");
     assert_eq!(
