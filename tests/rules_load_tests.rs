@@ -218,3 +218,33 @@ fn yaml_1_1_booleans_stay_strings_in_enum_sets() {
     assert!(findings.is_empty(), "{findings:?}");
     assert_eq!(set.rules.len(), 1);
 }
+
+/// `uses_links`: the id of the rule that reads links, at the root or nested under `each:`, so a
+/// caller that forbids link checks never walks the rule tree itself.
+#[test]
+fn uses_links_names_the_rule_that_reads_links_at_either_depth() {
+    let root = support::rule_set("- select: A\n  wiki: true");
+    assert_eq!(root.uses_links().as_deref(), Some("test.rule[0]"));
+
+    let nested = support::rule_set(
+        "- select: SECTION(\"Roles\")\n  each:\n    - select: A\n      resolve: true",
+    );
+    assert_eq!(nested.uses_links().as_deref(), Some("each[0]"));
+
+    let named = support::rule_set(
+        "- select: SECTION(\"Roles\")\n  each:\n    - select: A\n      id: role-links\n      wiki: true",
+    );
+    assert_eq!(named.uses_links().as_deref(), Some("role-links"));
+
+    let none = support::rule_set("- select: H1\n  count: 1\n- select: FRONTMATTER\n  min: 1");
+    assert_eq!(none.uses_links(), None);
+
+    // The specs.md rule file: its `A` rule is the only link check, at index 7.
+    assert_eq!(
+        RuleSet::parse(SPEC_RULE_FILE)
+            .unwrap_or_else(|e| panic!("{e}"))
+            .uses_links()
+            .as_deref(),
+        Some("feature-index.rule[7]")
+    );
+}

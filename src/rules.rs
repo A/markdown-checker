@@ -96,6 +96,10 @@ pub struct Rule {
     pub selector_source: String,
     pub optional: bool,
     pub assertions: Vec<Box<dyn Assertion>>,
+    /// The rule that reads links (`wiki:` / `resolve:`) here or below: this rule's `check`, or
+    /// the check of a rule nested under its `each:`. `None` when no rule at or under it is a
+    /// link check.
+    pub link_rule: Option<String>,
 }
 
 #[derive(Debug)]
@@ -125,6 +129,15 @@ impl RuleSet {
         }
 
         Ok(RuleSet { doc, rules })
+    }
+
+    /// The rule id of the first link check of the set: a rule carrying `wiki:` or `resolve:`
+    /// itself, or — when the check sits in a rule nested under an `each:` — that inner rule's id,
+    /// which is `each[{index}]` unless the rule declares its own `id:`. `None` when the set reads
+    /// no links, so a caller that forbids link checks never has to walk the rule tree itself.
+    #[must_use]
+    pub fn uses_links(&self) -> Option<String> {
+        self.rules.iter().find_map(|rule| rule.link_rule.clone())
     }
 }
 
@@ -171,6 +184,7 @@ fn compile(
         selector::parse(&raw.select).map_err(|e| LoadError::new(format!("rule {path}: {e}")))?;
 
     let mut assertions: Vec<Box<dyn Assertion>> = Vec::new();
+    let mut nested_link: Option<String> = None;
     let regex =
         |source: &String| -> Result<Pattern, LoadError> { compile_regex(source, path, false) };
 
@@ -259,8 +273,15 @@ fn compile(
             };
             inner.push(compile(rule, slot, &format!("{path}.each[{index}]"), ids)?);
         }
+        nested_link = inner.iter().find_map(|rule| rule.link_rule.clone());
         assertions.push(Box::new(assert::Each(inner)));
     }
+
+    let link_rule = if raw.wiki.unwrap_or(false) || raw.resolve.unwrap_or(false) {
+        Some(check.clone())
+    } else {
+        nested_link
+    };
 
     Ok(Rule {
         check,
@@ -268,6 +289,7 @@ fn compile(
         selector_source: raw.select.clone(),
         optional: raw.optional.unwrap_or(false),
         assertions,
+        link_rule,
     })
 }
 
